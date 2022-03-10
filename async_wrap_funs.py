@@ -7,8 +7,6 @@ from typing import Coroutine
 
 from loguru import logger
 
-# TODO 断网处理
-
 
 def retry_if_exception(ex: Exception, retry: int, wait: int = 1, out_exc: bool = True):
     """捕获异常进行重试 装饰器
