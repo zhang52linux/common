@@ -8,28 +8,29 @@ from typing import Coroutine
 from loguru import logger
 
 
-def retry_if_exception(ex: Exception, retry: int, wait: int = 1, out_exc: bool = True):
-    """捕获异常进行重试 装饰器
-    Args:
-        ex (Exception): 异常
-        retry (int): 重试次数
-        wait (int, optional): 重试间隔. Defaults to 1.
-        out_exc (bool, optional): 输出错误信息. Defaults to True.
+def retry_if_exception(ex: Exception, retry_cout: int = 3, wait: int = 1, out_exc=False):
+    """ 捕获异常进行重试
+    :param ex: 异常
+    :param retry: 重试次数
+    :param wait: 重试间隔(秒)
+    :param out_exc: 输出错误栈
     """
-    def outer(func):
+    def safe_function(func):
         @wraps(func)
-        async def wrapper(*args, **kwargs):
-            assert retry > 0
-            cnt = retry + 1
+        async def wrapper(*arg, **kwargs):
+            assert retry_cout > 0
+            cnt = retry_cout + 1
             while cnt := cnt - 1:
                 try:
-                    return await func(*args, **kwargs)
+                    result = await func(*arg, **kwargs)
+                    return result
                 except ex as e:
-                    logger.warning(f'{func.__module__ }.{func.__name__ }:{e.__class__}{e.args}')
+                    logger.warning(f'{func.__name__ }:{func.__doc__ }:{e.args}')
                     out_exc and logger.error(traceback.format_exc())
                     await asyncio.sleep(wait)
+            return False
         return wrapper
-    return outer
+    return safe_function
 
 
 def callback_if_exception(ex: Exception, callback: Coroutine, out_exc=False):
